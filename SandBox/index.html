@@ -111,15 +111,16 @@
 					document.addEventListener( 'mouseup', onDocumentMouseUp, false );
 					
 				});
-				control.d.addEventListener("click",function(){
-					SelectObj.position.x += parseInt(control.PosX.value);
-					if(SelectObj.position.x>475) SelectObj.position.x = 475;
-					if(SelectObj.position.x<-475) SelectObj.position.x = -475;
-					SelectObj.position.y += parseInt(control.PosY.value);
-					if(SelectObj.position.y<25) SelectObj.position.y = 25;
-					SelectObj.position.z += parseInt(control.PosZ.value);
-					if(SelectObj.position.z>475) SelectObj.position.z = 475;
-					if(SelectObj.position.z<-475) SelectObj.position.z = -475;
+				control.PosX.addEventListener("change",function(){
+					SelectObj.position.x = parseInt(control.PosX.value);
+					render();
+				});
+				control.PosY.addEventListener("change",function(){
+					SelectObj.position.y = parseInt(control.PosY.value);
+					render();
+				});
+				control.PosZ.addEventListener("change",function(){
+					SelectObj.position.z = parseInt(control.PosZ.value);
 					render();
 				});
 				container.appendChild(control.a);
@@ -287,7 +288,6 @@
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );
-
 			}
 			function onDocumentMouseMove( event ) {
 				if(isMouseDown){
@@ -332,12 +332,12 @@
 							if(SelectObj) SelectObj.material.opacity = 1;
 							control.a.style.top = '0px';
 							control.a.style.left = "0px";
-							control.PosX.value = '0';
-							control.PosY.value = '0';
-							control.PosZ.value = '0';
 							HaveSelect = true;
 							SelectObj = intersect.object;
 							SelectObj.material.opacity = 0.5;
+							control.PosX.value = SelectObj.position.x;
+							control.PosY.value = SelectObj.position.y;
+							control.PosZ.value = SelectObj.position.z;
 							document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
 							document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
 							document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
@@ -369,7 +369,6 @@
 			function onDocumentKeyUp( event ) {
 				switch ( event.keyCode ) {
 					case 16: isShiftDown = false; break;
-					case 65: CubeRotation();break;//a
 				}
 			}
 			function render() {

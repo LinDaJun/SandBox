@@ -47,9 +47,8 @@ function Control(){
 			XLabel.appendChild(document.createTextNode("X軸:"));
 			this.PosX = document.createElement("INPUT");
 			this.PosX.setAttribute("type", "number");
-			this.PosX.setAttribute("value", "0");
-			this.PosX.setAttribute("max", "400");
-			this.PosX.setAttribute("min", "-400");
+			this.PosX.setAttribute("max", "475");
+			this.PosX.setAttribute("min", "-475");
 			this.PosX.setAttribute("step", "10");
 			this.PosX.style.width = "50px";
 			XLabel.appendChild(this.PosX);
@@ -58,9 +57,8 @@ function Control(){
 			YLabel.appendChild(document.createTextNode("Y軸:"));
 			this.PosY = document.createElement("INPUT");
 			this.PosY.setAttribute("type", "number");
-			this.PosY.setAttribute("value", "0");
-			this.PosY.setAttribute("max", "400");
-			this.PosY.setAttribute("min", "-400");
+			this.PosY.setAttribute("max", "475");
+			this.PosY.setAttribute("min", "25");
 			this.PosY.setAttribute("step", "10");
 			this.PosY.style.width = "50px";
 			YLabel.appendChild(this.PosY);
@@ -69,21 +67,15 @@ function Control(){
 			ZLabel.appendChild(document.createTextNode("Z軸:"));
 			this.PosZ = document.createElement("INPUT");
 			this.PosZ.setAttribute("type", "number");
-			this.PosZ.setAttribute("value", "0");
-			this.PosZ.setAttribute("max", "400");
-			this.PosZ.setAttribute("min", "-400");
+			this.PosZ.setAttribute("max", "475");
+			this.PosZ.setAttribute("min", "-475");
 			this.PosZ.setAttribute("step", "10");
 			this.PosZ.style.width = "50px";
 			ZLabel.appendChild(this.PosZ);
-			//開始按鈕
-			this.d = document.createElement("button");
-			this.d.style.width = '40%';
-			this.d.appendChild(document.createTextNode("移動物件"));
 			//串接
 			Pos.appendChild(XLabel);
 			Pos.appendChild(YLabel);
 			Pos.appendChild(ZLabel);
-			Pos.appendChild(this.d);
 		edit.appendChild(Pos);
 	//串接
 		this.a.appendChild(worktitle);
