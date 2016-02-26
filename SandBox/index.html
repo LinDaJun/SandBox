@@ -1,0 +1,441 @@
+<html>
+	<head>
+		<title>線上沙盒系統</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+			#oldie { background-color: #ddd !important }
+		</style>
+	</head>
+	<body>
+		<script src="http://threejs.org/build/three.min.js"></script>
+		<script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+		<script src="http://threejs.org/examples/js/loaders/MTLLoader.js"></script>
+		<script src="http://threejs.org/examples/js/loaders/OBJMTLLoader.js"></script>
+		<script src="http://threejs.org/examples/js/controls/OrbitControls.js"></script>
+		<script src="js/ajax.js"></script>
+		<script src="js/Menu.js"></script>
+		<script src="js/control.js"></script>
+		<script src="js/ToolBar.js"></script>
+		<!-- 以下為畫面設定 -->
+		<script>
+			var container,control,menu,toolbar,
+			camera,scene,renderer;
+			var plane;
+			var mouse, raycaster, isShiftDown = false,isMouseDown=false,isMouseMove=false;
+			var rollOverMesh,rollOverMaterial;
+			var cubeGeo, cubeMaterial,cubeName,cubetype;
+			var size = 500, step = 10;
+			var objects;
+			var onMouseDownPosition,onMouseDownTheta = 0,onMouseDownPhi = 45,
+			radious = 1600, theta = 0,  phi = 45;
+			var model,tex,cubex=0,cubey=0,cubez=0;
+			var ModelData = [],
+			CanDo = false,HaveSelect=false,SelectObj=null;
+			init();
+			render();
+			function init() {
+				while (document.body.firstChild) {
+					document.body.removeChild(document.body.firstChild);
+				}
+				//場景
+				scene = new THREE.Scene();
+				objects = new Array;//物件陣列
+				//菜單
+				GetModel();
+				menu = new Menu();
+				var menulist = menu.a;
+				var menulistButton = menu.b;
+				menulistButton.addEventListener("click",function(){
+					if(menulist.style.width == "2%"){
+						menulistButton.innerHTML = "點<br>我<br>隱<br>藏<br>!";
+						menulist.style.width = "20%";
+						menulistButton.style.width = "20%";
+						container.style.left = menulist.style.width;
+						container.style.width = (100 - parseInt(menulist.style.width.replace('%',''))) + "%";
+						SetMenuType();
+					}else{
+						menulistButton.innerHTML = "點<br>我<br>展<br>開<br>!";
+						while (menulist.firstChild) {
+							menulist.removeChild(menulist.firstChild);
+						}
+						menulist.style.width = "2%";
+						menulistButton.style.width = "2%";
+						container.style.left = menulist.style.width;
+						container.style.width = (100 - parseInt(menulist.style.width.replace('%',''))) + "%";
+					}
+				});
+				document.body.appendChild(menulist);
+				document.body.appendChild(menulistButton);
+				//本體初始化
+				container = document.createElement('div');
+				container.style.width = (100 - parseInt(menulist.style.width.replace('%',''))) + "%";
+				container.style.position = 'absolute';
+				container.style.left = menulist.style.width;
+				document.body.appendChild(container);
+				//工具列初始化
+				toolbar = new ToolBar(95,0);
+				toolbar.b.addEventListener("click",function(){
+					DataOutPut();
+				});
+				toolbar.c.addEventListener("change",function(){
+					DataInPut();
+				});
+				container.appendChild(toolbar.a);
+				//控制台初始化
+				control = new Control();
+				control.b.addEventListener("click",function(){
+					scene.remove(SelectObj);
+					objects.splice(objects.indexOf(SelectObj),1);
+					SelectObj=null;
+					HaveSelect = false;
+					control.a.style.top = (window.innerHeight+500) + "px";
+					render();
+					document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+					document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+					document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+				});
+				control.c.addEventListener("click",function(){
+					SelectObj.material.opacity = 1;
+					HaveSelect = false;
+					SelectObj = null;
+					control.a.style.top = (window.innerHeight+500) + "px";
+					document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+					document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+					document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+					
+				});
+				control.d.addEventListener("click",function(){
+					SelectObj.position.x += parseInt(control.PosX.value);
+					if(SelectObj.position.x>475) SelectObj.position.x = 475;
+					if(SelectObj.position.x<-475) SelectObj.position.x = -475;
+					SelectObj.position.y += parseInt(control.PosY.value);
+					if(SelectObj.position.y<25) SelectObj.position.y = 25;
+					SelectObj.position.z += parseInt(control.PosZ.value);
+					if(SelectObj.position.z>475) SelectObj.position.z = 475;
+					if(SelectObj.position.z<-475) SelectObj.position.z = -475;
+					render();
+				});
+				container.appendChild(control.a);
+				//測試欄
+				var info = document.createElement( 'div' );
+				info.style.position = 'absolute';
+				info.style.top = '5px';
+				info.style.width = '100%';
+				info.style.textAlign = 'center';
+				info.id = "info";
+				info.innerHTML = 'Massage:';
+				container.appendChild( info );
+				//攝影機
+				camera = new THREE.PerspectiveCamera( 50, parseInt(container.style.width.replace('%',''))/100*window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.set( 500, 500, 500 );
+				camera.lookAt( new THREE.Vector3() );
+				scene.add(camera);
+				//線條描繪
+				var geometry = new THREE.Geometry();
+				for ( var i = - size; i <= size; i += step ) {
+					geometry.vertices.push( new THREE.Vector3( - size, 0, i ) );
+					geometry.vertices.push( new THREE.Vector3(   size, 0, i ) );
+					geometry.vertices.push( new THREE.Vector3( i, 0, - size ) );
+					geometry.vertices.push( new THREE.Vector3( i, 0,   size ) );
+				}
+				var material = new THREE.LineBasicMaterial( { color: 0x000000, opacity: 0.2, transparent: true } );
+				var line = new THREE.LineSegments( geometry, material );
+				scene.add( line );
+
+				//選擇器
+				raycaster = new THREE.Raycaster();
+				mouse = new THREE.Vector2();
+				//版面
+				var geometry = new THREE.PlaneBufferGeometry( 1000, 1000 );
+				geometry.rotateX( - Math.PI / 2 );
+				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
+				plane.name = "plane";
+				scene.add( plane );
+				objects.push( plane );
+
+				// Lights
+				var ambientLight = new THREE.AmbientLight( 0x606060 );
+				scene.add( ambientLight );
+				var directionalLight = new THREE.DirectionalLight( 0xffffff );
+				directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
+				scene.add( directionalLight );
+				//渲染器
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setClearColor( 0xf0f0f0 );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+				
+				//controls
+				var controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.addEventListener( 'change', render );
+				controls.target.set( 0, 1.2, 2 );
+				controls.update();
+				
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+				document.addEventListener( 'keydown', onDocumentKeyDown, false );
+				document.addEventListener( 'keyup', onDocumentKeyUp, false );
+				//
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+			function GetModelData(){
+				if (request.readyState == 4) {//完成狀態有好幾種，4代表資料傳回完成
+					var data = request.responseText;//取得傳回的資料存在變數中
+					ModelData = JSON.parse(data);//解出JSON陣列
+				}
+			}
+			function SetMenuItem(type) {
+				function ItemClick(Item,data,type){
+					Item.addEventListener("click",function(){
+						setCube(data.NO,data.X,data.Y,data.Z,data.tex,type);
+					});
+				}
+				var Data = ModelData[type].Data;
+				var ItemCount = Data.length;//共幾項
+				if(ItemCount>5) ItemCount = 5;//大於5項時顯示5項
+				var Div = document.getElementById("menudivScroll_"+type);//顯示區
+				//顯示區展開
+				Div.style.height = ((ItemCount*10))+"%";
+				Div.style.backgroundColor = "#FFFCDF";
+				var menu = document.getElementById(Div.parentNode.id);//選單
+				for(var i=0;i<Data.length;i++){
+					var Item = document.createElement('div');
+					Item.style.width = "98%";
+					Item.style.left = "1%";
+					Item.style.height = ((100/ItemCount)-4)+"%";
+					Item.style.top = (((100/ItemCount)-2)*i+1)+"%";
+					Item.style.position = 'absolute';
+					Item.style.backgroundImage = "url('model/icon/"+Data[i].NO+".png')";
+					Item.style.backgroundRepeat = "no-repeat";
+					Item.style.backgroundSize = "100% 100%";
+					Item.id = "menuItem_"+i;
+					ItemClick(Item,Data[i],type);
+					Div.appendChild(Item);
+				}
+				for(var i=parseInt(type)+1;i<(menu.childElementCount/2);i++){
+					var child = document.getElementById("menudiv_"+i);//類型
+					child.style.top = (parseInt(child.style.top.replace("%","")) + ItemCount*10)+"%";
+					var childS = document.getElementById("menudivScroll_"+i);//類型顯示
+					childS.style.top = (parseInt(childS.style.top.replace("%","")) + ItemCount*10)+"%";
+				}
+			}
+			function SetMenuType() {
+				for (var i = 0; i < ModelData.length; i++) {//實作陣列
+					menu.NewType(ModelData[i].name,i);
+				}
+			}
+			function DelMenuItem(i,DivScroll) {
+				var DivScrollHeight = DivScroll.childElementCount;
+				for(var j=(i+1);j<(menu.a.childElementCount/2);j++){
+					var child = document.getElementById("menudiv_"+j);//類型
+					child.style.top = (parseInt(child.style.top.replace("%","")) - DivScrollHeight*10)+"%";
+					var childS = document.getElementById("menudivScroll_"+j);//類型顯示
+					childS.style.top = (parseInt(childS.style.top.replace("%","")) - DivScrollHeight*10)+"%";
+				}
+				while (DivScroll.firstChild) {
+					DivScroll.removeChild(DivScroll.firstChild);
+				}
+				DivScroll.style.height = "0px";
+			}
+			function CubeRotation(){
+				rollOverMesh.rotation.y += Math.PI / 2;
+				var temp = cubex;
+				cubex = cubez;
+				cubez = temp;
+				cubeGeo = new THREE.BoxGeometry( cubex, cubey, cubez );
+				render();
+			}
+			function CubePos(Pos,x,y,z){
+				if(((x/2)%10)==0) Pos.x += 5;
+				if(((z/2)%10)==0) Pos.z += 5;
+				if(((y/2)%10)!=0) Pos.y -= 5;
+				Pos.y += y/2;
+				return Pos;
+			}
+			function setCube(model,x,y,z,tex,type){
+				//箱子描繪
+				cubetype = type;
+				cubeName = model;
+				cubeGeo = new THREE.BoxGeometry( x, y, z );
+				cubeMaterial = new THREE.MeshLambertMaterial( { color: 0xDF1F1F, map: THREE.ImageUtils.loadTexture("model/tex/"+tex+".png")});
+				cubex = x;
+				cubey = y;
+				cubez = z;
+				//擺放箱子透明
+				if(scene.getObjectByName( "CubeMesh", true )){
+					scene.remove(scene.getObjectByName( "CubeMesh", true ));
+				}
+				rollOverMaterial = new THREE.MeshLambertMaterial( { color: 0xDF1F1F, transparent: true, opacity: 0.5, map: THREE.ImageUtils.loadTexture("model/tex/"+tex+".png")});
+				rollOverMesh = new THREE.Mesh( cubeGeo, rollOverMaterial );
+				rollOverMesh.position = CubePos(rollOverMesh.position,x,y,z);
+				rollOverMesh.name = "CubeMesh";
+				scene.add(rollOverMesh);
+				CanDo = true;
+				container.style.cursor = "none";
+			}
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+			function onDocumentMouseMove( event ) {
+				if(isMouseDown){
+					isMouseMove = true;
+				}else{
+					if(rollOverMesh){
+						if(!CanDo){
+							rollOverMesh.position.y = 2000;
+							render();
+							return;
+						}
+						event.preventDefault();
+						if(menu.a.style.width=="20%") mouse.set( ( event.clientX / (window.innerWidth*1.2) )*2-1.2, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+						else mouse.set( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+						raycaster.setFromCamera( mouse, camera );
+						var intersects = raycaster.intersectObjects( objects );
+						if ( intersects.length > 0 ) {
+							var intersect = intersects[ 0 ];
+							rollOverMesh.position.copy( intersect.point ).add( intersect.face.normal );
+							rollOverMesh.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 50/2 );
+						}
+						render();
+					}
+				}
+			}
+			function onDocumentMouseUp( event ) {
+				isMouseDown = false;
+				if(isMouseMove){
+					isMouseMove = false;
+					return;
+				}
+				event.preventDefault();
+				//alert(window.innerWidth);
+				if(menu.a.style.width=="20%") mouse.set( ( event.clientX / (window.innerWidth*1.2) )*2-1.2, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				else mouse.set( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( objects );
+				if ( intersects.length > 0 ) {
+					var intersect = intersects[ 0 ];
+					if(!CanDo){
+						if(intersect.object != plane){
+							if(SelectObj) SelectObj.material.opacity = 1;
+							control.a.style.top = '0px';
+							control.a.style.left = "0px";
+							control.PosX.value = '0';
+							control.PosY.value = '0';
+							control.PosZ.value = '0';
+							HaveSelect = true;
+							SelectObj = intersect.object;
+							SelectObj.material.opacity = 0.5;
+							document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+							document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
+							document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+						}
+					} else {
+						var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+						voxel.material.transparent = true;
+						voxel.position.copy( intersect.point ).add( intersect.face.normal );
+						voxel.position.divideScalar( 50 ).floor().multiplyScalar( 50 ).addScalar( 50/2 );
+						voxel.overdraw = true;
+						voxel.name = cubeName;
+						voxel.typeID = cubetype;
+						scene.add( voxel );
+						CanDo = false;
+						objects.push( voxel );
+						container.style.cursor = "pointer";
+					}
+					render();
+				}
+			}
+			function onDocumentMouseDown( event ) {
+				isMouseDown = true;
+			}
+			function onDocumentKeyDown( event ) {
+				switch( event.keyCode ) {
+					case 16: isShiftDown = true; break;
+				}
+			}
+			function onDocumentKeyUp( event ) {
+				switch ( event.keyCode ) {
+					case 16: isShiftDown = false; break;
+					case 65: CubeRotation();break;//a
+				}
+			}
+			function render() {
+				renderer.render( scene, camera );
+			}
+			function DataOutPut(){
+				var OutArray = new Array();
+				for(var i=1;i<objects.length;i++){
+					var objectData = new Object();
+					objectData.name = objects[i].name;
+					objectData.typeID = objects[i].typeID;
+					objectData.position = new Object();
+					objectData.position.x = objects[i].position.x;
+					objectData.position.y = objects[i].position.y;
+					objectData.position.z = objects[i].position.z;
+					//objectData.position.r = objects[i].position.z;選轉角度
+					OutArray.push(objectData);
+				}
+				var jsonData = JSON.stringify(OutArray);
+				
+				//下載方法取至http://stackoverflow.com/questions/3665115/create-a-file-in-memory-for-user-to-download-not-through-server 202F
+				var element = document.createElement('a');
+				var filename = "123.txt";
+				element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(jsonData));
+				element.setAttribute('download', filename);
+				element.style.display = 'none';
+				document.body.appendChild(element);
+				element.click();
+				document.body.removeChild(element);
+			}
+			//上傳方法取至http://blog.teamtreehouse.com/reading-files-using-the-html5-filereader-api
+			function DataInPut(){//處理外觀https://mangguo.org/custom-input-file-style-ie-compatible/
+				var file = toolbar.c.files[0];
+				var textType = /text.*/;
+				//清空場景
+				init();
+				if (file.type.match(textType)) {
+					var reader = new FileReader();
+					reader.onload = function(e) {
+						//取出資料並開始解碼
+						var ObjectData = JSON.parse(reader.result);//解出JSON陣列
+						for(var i=0;i<ObjectData.length;i++){
+							var Data = ModelData[ObjectData[i].typeID].Data;
+							for(var j=0;j<Data.length;j++){
+								if(Data[j].NO == ObjectData[i].name){//找出目標開始新增
+									setCube(Data[j].NO,Data[j].X,Data[j].Y,Data[j].Z,Data[j].tex,ObjectData[i].typeID);
+									var voxel = new THREE.Mesh( cubeGeo, cubeMaterial );
+									voxel.material.transparent = true;
+									voxel.position.x = ObjectData[i].position.x;
+									voxel.position.y = ObjectData[i].position.y;
+									voxel.position.z = ObjectData[i].position.z;
+									voxel.overdraw = true;
+									voxel.name = cubeName;
+									voxel.typeID = cubetype;
+									scene.add( voxel );
+									objects.push( voxel );
+									CanDo = false;
+									break;
+								}
+							}
+						}
+					}
+					reader.readAsText(file);	
+				} else {
+					alert("File not supported!");
+				}
+			}
+		</script>
+	</body>
+</html>
