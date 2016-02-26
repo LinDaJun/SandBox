@@ -42,6 +42,17 @@ function Control(){
 			Pos.style.width = "100%";
 			Pos.style.height = "40px";
 			Pos.style.top = "2.5px";
+			//左半部
+			var PosL = document.createElement( 'div' );
+			PosL.style.width = "50%";
+			PosL.style.height = "100%";
+			PosL.style.position = 'absolute';
+			//右半部
+			var PosR = document.createElement( 'div' );
+			PosR.style.width = "50%";
+			PosR.style.height = "100%";
+			PosR.style.left = "50%";
+			PosR.style.position = 'absolute';
 			//X軸標籤
 			var XLabel = document.createElement("P");
 			XLabel.appendChild(document.createTextNode("X軸:"));
@@ -72,10 +83,23 @@ function Control(){
 			this.PosZ.setAttribute("step", "10");
 			this.PosZ.style.width = "50px";
 			ZLabel.appendChild(this.PosZ);
+			//R軸標籤
+			var RLabel = document.createElement("P");
+			RLabel.appendChild(document.createTextNode("旋轉:"));
+			this.PosR = document.createElement("INPUT");
+			this.PosR.setAttribute("type", "number");
+			this.PosR.setAttribute("max", "360");
+			this.PosR.setAttribute("min", "0");
+			this.PosR.setAttribute("step", "1");
+			this.PosR.style.width = "50px";
+			RLabel.appendChild(this.PosR);
 			//串接
-			Pos.appendChild(XLabel);
-			Pos.appendChild(YLabel);
-			Pos.appendChild(ZLabel);
+			PosL.appendChild(XLabel);
+			PosL.appendChild(YLabel);
+			PosR.appendChild(ZLabel);
+			PosR.appendChild(RLabel);
+			Pos.appendChild(PosL);
+			Pos.appendChild(PosR);
 		edit.appendChild(Pos);
 	//串接
 		this.a.appendChild(worktitle);

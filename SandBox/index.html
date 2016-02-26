@@ -125,6 +125,10 @@
 						SelectObj.position.z = parseInt(control.PosZ.value);
 						render();
 					});
+					control.PosR.addEventListener("change",function(){
+						SelectObj.rotation.y = Math.PI * (parseInt(control.PosR.value)/180);
+						render();
+					});
 				container.appendChild(control.a);
 				//測試欄
 				var info = document.createElement( 'div' );
@@ -249,14 +253,6 @@
 					DivScroll.removeChild(DivScroll.firstChild);
 				}
 				DivScroll.style.height = "0px";
-			}
-			function CubeRotation(){
-				rollOverMesh.rotation.y += Math.PI / 2;
-				var temp = cubex;
-				cubex = cubez;
-				cubez = temp;
-				cubeGeo = new THREE.BoxGeometry( cubex, cubey, cubez );
-				render();
 			}
 			function CubePos(Pos,x,y,z){
 				if(((x/2)%10)==0) Pos.x += 5;
