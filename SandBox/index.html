@@ -336,6 +336,7 @@
 							control.PosX.value = SelectObj.position.x;
 							control.PosY.value = SelectObj.position.y;
 							control.PosZ.value = SelectObj.position.z;
+							control.PosR.value = "0";
 							document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
 							document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
 							document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
@@ -382,7 +383,7 @@
 					objectData.position.x = objects[i].position.x;
 					objectData.position.y = objects[i].position.y;
 					objectData.position.z = objects[i].position.z;
-					//objectData.position.r = objects[i].position.z;選轉角度
+					objectData.position.r = objects[i].rotation.y;//旋轉角度
 					OutArray.push(objectData);
 				}
 				var jsonData = JSON.stringify(OutArray);
@@ -418,6 +419,7 @@
 									voxel.position.x = ObjectData[i].position.x;
 									voxel.position.y = ObjectData[i].position.y;
 									voxel.position.z = ObjectData[i].position.z;
+									voxel.rotation.y = ObjectData[i].position.r;
 									voxel.overdraw = true;
 									voxel.name = cubeName;
 									voxel.typeID = cubetype;
