@@ -90,39 +90,41 @@
 				container.appendChild(toolbar.a);
 				//控制台初始化
 				control = new Control();
-				control.b.addEventListener("click",function(){
-					scene.remove(SelectObj);
-					objects.splice(objects.indexOf(SelectObj),1);
-					SelectObj=null;
-					HaveSelect = false;
-					control.a.style.top = (window.innerHeight+500) + "px";
-					render();
-					document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-					document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-					document.addEventListener( 'mouseup', onDocumentMouseUp, false );
-				});
-				control.c.addEventListener("click",function(){
-					SelectObj.material.opacity = 1;
-					HaveSelect = false;
-					SelectObj = null;
-					control.a.style.top = (window.innerHeight+500) + "px";
-					document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-					document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-					document.addEventListener( 'mouseup', onDocumentMouseUp, false );
-					
-				});
-				control.PosX.addEventListener("change",function(){
-					SelectObj.position.x = parseInt(control.PosX.value);
-					render();
-				});
-				control.PosY.addEventListener("change",function(){
-					SelectObj.position.y = parseInt(control.PosY.value);
-					render();
-				});
-				control.PosZ.addEventListener("change",function(){
-					SelectObj.position.z = parseInt(control.PosZ.value);
-					render();
-				});
+					//移除按鈕事件
+					control.b.addEventListener("click",function(){
+						scene.remove(SelectObj);
+						objects.splice(objects.indexOf(SelectObj),1);
+						SelectObj=null;
+						HaveSelect = false;
+						control.a.style.top = (window.innerHeight+500) + "px";
+						render();
+						document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+						document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+						document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+					});
+					//取消選取事件
+					control.c.addEventListener("click",function(){
+						SelectObj.material.opacity = 1;
+						HaveSelect = false;
+						SelectObj = null;
+						control.a.style.top = (window.innerHeight+500) + "px";
+						document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+						document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+						document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+					});
+					//可移動按鈕事件
+					control.PosX.addEventListener("change",function(){
+						SelectObj.position.x = parseInt(control.PosX.value);
+						render();
+					});
+					control.PosY.addEventListener("change",function(){
+						SelectObj.position.y = parseInt(control.PosY.value);
+						render();
+					});
+					control.PosZ.addEventListener("change",function(){
+						SelectObj.position.z = parseInt(control.PosZ.value);
+						render();
+					});
 				container.appendChild(control.a);
 				//測試欄
 				var info = document.createElement( 'div' );
